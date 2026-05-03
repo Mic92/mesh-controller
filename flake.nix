@@ -38,5 +38,9 @@
           };
         }
       );
+
+      checks = eachSystem (pkgs: {
+        package-default = self.packages.${pkgs.stdenv.hostPlatform.system}.default;
+      });
     };
 }
