@@ -3,13 +3,20 @@
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
-    flake-parts.url = "github:hercules-ci/flake-parts";
   };
 
-  outputs = inputs@{ flake-parts, ... }:
-    flake-parts.lib.mkFlake { inherit inputs; } ({ lib, ... }: {
-      systems = lib.systems.flakeExposed;
-      perSystem = { pkgs, ... }:
+  outputs =
+    { self, nixpkgs }:
+    let
+      eachSystem =
+        f:
+        nixpkgs.lib.genAttrs nixpkgs.lib.systems.flakeExposed (
+          system: f nixpkgs.legacyPackages.${system}
+        );
+    in
+    {
+      packages = eachSystem (
+        pkgs:
         let
           zerotier-src = pkgs.fetchFromGitHub {
             owner = "zerotier";
@@ -19,7 +26,7 @@
           };
         in
         {
-          packages.default = pkgs.mkShell {
+          default = pkgs.mkShell {
             packages = [
               pkgs.bashInteractive
               pkgs.cmake
@@ -29,6 +36,7 @@
 
             CMAKE_FLAGS = "-DSOURCE_DIR=${zerotier-src}";
           };
-        };
-    });
+        }
+      );
+    };
 }
